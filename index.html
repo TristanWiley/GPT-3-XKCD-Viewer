@@ -1,0 +1,147 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Latest XKCD Comic</title>
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background-color: #F3F3F3;
+      text-align: center;
+    }
+    
+    img {
+      width: 600px;
+    }
+    
+    #prev, #next, #go {
+      padding: 10px 15px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #757575;
+      background-color: #FFC107;
+      border: none;
+      border-radius: 3px;
+      margin: 10px;
+    }
+
+    #prev:hover, #next:hover, #go:hover {
+      color: #FFC107;
+      background-color: #212121;
+      cursor: pointer;
+    }
+
+    #go-num {
+      padding: 10px 15px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #212121;
+      background-color: #FFC107;
+      border: none;
+      border-radius: 3px;
+      margin: 10px;
+    }
+
+    #alt-text {
+      display: none;
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Latest XKCD Comic</h2>
+  <button id="prev">Previous</button>
+  <button id="next">Next</button>
+  <button id="go">Latest</button>
+  <input type="text" id="go-num" placeholder="Comic number" pattern="[0-9]*" oninput="if(value<1){value=''}"> 
+  <h3 id="title"></h3>
+  <p>No. <span id="num"></span></p>
+  <img id="img" onmouseover="document.getElementById('alt-text').style.display = 'block';" onmouseout="document.getElementById('alt-text').style.display = 'none';" />
+  <p id="alt-text"></p>
+
+  <script>
+    let comicNum = 0;
+    let useProxy = false;
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    const xkcdURL = 'https://xkcd.com/info.0.json';
+    
+    // Check if the page is hosted on a domain or not
+    if (window.location.hostname === "") {
+      useProxy = true;
+    }
+    
+    const loadComic = comicNum => {
+      const xkcdURL = `https://xkcd.com/${comicNum}/info.0.json`;
+      fetch(useProxy ? proxyUrl + xkcdURL : xkcdURL)
+        .then(response => response.json())
+        .then(data => {
+          let { num, title, img, alt } = data;
+          document.getElementById('title').innerHTML = title;
+          document.getElementById('num').innerHTML = num;
+          document.getElementById('img').src = img;
+          document.getElementById('alt-text').innerHTML = alt;
+        });
+    };
+    
+    fetch(useProxy ? proxyUrl + xkcdURL : xkcdURL)
+      .then(response => response.json())
+      .then(data => {
+        let { num } = data;
+        comicNum = num;
+        loadComic(comicNum);
+      });
+    
+    // function to get the latest comic 
+    const getLatestComic = () => {
+      fetch(useProxy ? proxyUrl + xkcdURL : xkcdURL)
+        .then(response => response.json())
+        .then(data => {
+          let { num } = data;
+          loadComic(num);
+        });
+    };
+    
+    // function to get a specific comic 
+    const getSpecificComic = num => {
+      loadComic(num);
+      document.getElementById('go-num').value = "";
+    };
+    
+    // function to handle navigation buttons
+    const handleNavigation = (direction) => {
+      switch (direction) {
+        case 'prev':
+          comicNum = comicNum - 1;
+          break;
+        case 'next':
+          comicNum = comicNum + 1;
+          break;
+      }
+      loadComic(comicNum);
+    };
+    
+    document.getElementById('prev').addEventListener('click', () => {
+      handleNavigation('prev');
+    });
+    
+    document.getElementById('next').addEventListener('click', () => {
+      handleNavigation('next');
+    });
+    
+    document.getElementById('go').addEventListener('click', () => {
+      getLatestComic();
+    });
+    
+    document.getElementById('go-num').addEventListener('keyup', (e) => {
+      if (e.keyCode === 13) {
+        getSpecificComic(e.target.value);
+      }
+    });
+  </script>
+</body>
+
+</html>
